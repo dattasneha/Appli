@@ -46,7 +46,7 @@ class User(SQLModel, TimestampMixin, table=True):
             default=uuid.uuid4
         )
     )
-
+    name: str
     email: str = Field(unique=True, index=True)
     hashed_password: str
     role: UserRole = Field(default=UserRole.USER)
@@ -67,7 +67,6 @@ class Job(SQLModel, TimestampMixin, table=True):
     title: str
     description: str
     is_active: bool = Field(default=True)
-
     applications: List["Application"] = Relationship(back_populates="job")
 
 class Application(SQLModel, TimestampMixin, table=True):
