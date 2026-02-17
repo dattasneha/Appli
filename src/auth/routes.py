@@ -8,7 +8,7 @@ from src.auth.util import create_access_token, verify_password, hash_password
 from src.db.main import engine
 from src.model import User,UserRole
 from pydantic import BaseModel
-
+from sqlalchemy.orm import selectinload 
 class LoginRequest(BaseModel):
     email: str
     password: str
@@ -33,7 +33,9 @@ async def login(payload: LoginRequest):
 
     async with AsyncSession(engine) as session:
         res = await session.execute(
-            select(User).where(User.email == email)
+            select(User)
+            .options(selectinload(User.applications))
+            .where(User.email == email)
         )
         user = res.scalars().first()
 
@@ -54,8 +56,14 @@ async def login(payload: LoginRequest):
         })
     except Exception as e:
         raise HTTPException(500, f"Token crash: {str(e)}")
-
-    return {"access_token": token}
+    sanitized_user = {
+        "id": str(user.id), 
+        "email": user.email,
+        "name": user.name,
+        "role": user.role.value,
+        "Applications": user.applications
+    }
+    return {"access_token": token,"user":sanitized_user}
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(payload: RegisterRequest):
