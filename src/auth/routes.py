@@ -7,6 +7,17 @@ from sqlmodel import select
 from src.auth.util import create_access_token, verify_password, hash_password
 from src.db.main import engine
 from src.model import User,UserRole
+from pydantic import BaseModel, EmailStr
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+class RegisterRequest(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    role: str
 
 router = APIRouter()
 
@@ -15,7 +26,10 @@ PASSWORD_REGEX = re.compile(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@#$%^&+=]{8,}$')
 
 
 @router.post("/login")
-async def login(email: str, password: str):
+async def login(payload: LoginRequest):
+
+    email = payload.email
+    password = payload.password
 
     async with AsyncSession(engine) as session:
         res = await session.execute(
@@ -44,29 +58,41 @@ async def login(email: str, password: str):
     return {"access_token": token}
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register(name: str, email: str, password: str,role:str):
-	if not name or not name.strip():
-		raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Name is required")
-	if not EMAIL_REGEX.match(email):
-		raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email format")
-	if not PASSWORD_REGEX.match(password):
-		raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password does not meet complexity requirements")
+async def register(payload: RegisterRequest):
 
-	async with AsyncSession(engine) as session:
-		q = select(User).where(User.email == email)
-		res = await session.execute(q)
-		existing = res.scalars().first()
-		if existing:
-			raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+    name = payload.name
+    email = payload.email
+    password = payload.password
+    role = payload.role
 
-		new_user = User(name=name.strip(), email=email, hashed_password=hash_password(password),role=role.lower())
-		session.add(new_user)
-		await session.commit()
-		await session.refresh(new_user)
-			
+    if not name or not name.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Name is required")
+    if not EMAIL_REGEX.match(email):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email format")
+    if not PASSWORD_REGEX.match(password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password does not meet complexity requirements")
 
-	return {"message": f"User registered with role {new_user.role}", "id": str(new_user.id), "email": new_user.email, "name": new_user.name, "role": new_user.role}
+    async with AsyncSession(engine) as session:
+        q = select(User).where(User.email == email)
+        res = await session.execute(q)
+        existing = res.scalars().first()
+        if existing:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
 
+        new_user = User(
+            name=name.strip(),
+            email=email,
+            hashed_password=hash_password(password),
+            role=role.lower()
+        )
+        session.add(new_user)
+        await session.commit()
+        await session.refresh(new_user)
 
-	
-		
+    return {
+        "message": f"User registered with role {new_user.role}",
+        "id": str(new_user.id),
+        "email": new_user.email,
+        "name": new_user.name,
+        "role": new_user.role
+    }
