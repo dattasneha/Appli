@@ -7,15 +7,15 @@ from sqlmodel import select
 from src.auth.util import create_access_token, verify_password, hash_password
 from src.db.main import engine
 from src.model import User,UserRole
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 class RegisterRequest(BaseModel):
     name: str
-    email: EmailStr
+    email: str   # plain string now
     password: str
     role: str
 
