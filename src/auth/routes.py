@@ -36,7 +36,7 @@ async def login(email: str, password: str):
         token = create_access_token({
             "id": str(user.id),
             "email": user.email,
-            "role": user.role
+            "role": user.role.value
         })
     except Exception as e:
         raise HTTPException(500, f"Token crash: {str(e)}")
@@ -44,7 +44,7 @@ async def login(email: str, password: str):
     return {"access_token": token}
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register(name: str, email: str, password: str,role:UserRole):
+async def register(name: str, email: str, password: str,role:str):
 	if not name or not name.strip():
 		raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Name is required")
 	if not EMAIL_REGEX.match(email):
@@ -59,13 +59,13 @@ async def register(name: str, email: str, password: str,role:UserRole):
 		if existing:
 			raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
 
-		new_user = User(name=name.strip(), email=email, hashed_password=hash_password(password),role=role)
+		new_user = User(name=name.strip(), email=email, hashed_password=hash_password(password),role=role.lower())
 		session.add(new_user)
 		await session.commit()
 		await session.refresh(new_user)
 			
 
-	return {"message": f"User registered with role {new_user.role}", "id": str(new_user.id), "email": new_user.email}
+	return {"message": f"User registered with role {new_user.role}", "id": str(new_user.id), "email": new_user.email, "name": new_user.name, "role": new_user.role}
 
 
 	

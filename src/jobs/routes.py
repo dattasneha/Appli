@@ -28,8 +28,9 @@ async def list_jobs():
     return jobs
 
 @router.post("/jobs", status_code=status.HTTP_201_CREATED)
-async def create_job(job: JobCreate, user=Depends(get_current_user)):
-    if user != UserRole.ADMIN:
+async def create_job(job: JobCreate, payload:dict=Depends(get_current_user)):
+    role_in_token = payload["user"].get("role", "").strip().lower()
+    if role_in_token != UserRole.ADMIN.value.lower():
         raise HTTPException(403, "Only admin can create jobs")
     job = Job(title=job.title, description=job.description, is_active=True)
 

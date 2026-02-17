@@ -57,10 +57,7 @@ def verify_password(password: str, hashed: str) -> bool:
 
 
 def decode_token(token: str) -> Optional[dict]:
-    """Decode a JWT access token and return the payload.
 
-    Returns None if token is invalid or expired.
-    """
     try:
         payload = jwt.decode(token, Config.ACCESS_TOKEN_KEY, algorithms=["HS256"])
         return payload
