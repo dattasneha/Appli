@@ -22,7 +22,7 @@ class RegisterRequest(BaseModel):
 router = APIRouter()
 
 EMAIL_REGEX = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-PASSWORD_REGEX = re.compile(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@#$%^&+=]{8,}$')
+PASSWORD_REGEX = re.compile(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@#$%^&+=]{2,}$')
 
 
 @router.post("/login")
