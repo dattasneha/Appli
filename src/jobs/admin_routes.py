@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status,Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import SQLModel, select
 from src.db.main import engine
-from src.model import Job, UserRole,Application
+from src.model import Job, UserRole,Application,ApplicationStatus
 import uuid
 from typing import Optional
 from src.dependency import get_current_user
@@ -63,8 +63,9 @@ async def change_job_status(job_id: uuid.UUID, is_active: bool, payload:dict =De
 
     return job
 
-@router.get("/admin/application", response_model=list[Job])
-async def list_all_applications(payload:dict=Depends(get_current_user)):
+
+@router.get("/admin/application", status_code=status.HTTP_200_OK)
+async def list_all_applications(payload: dict = Depends(get_current_user)):
     role_in_token = payload["user"]["role"].lower()
     if role_in_token != UserRole.ADMIN.value.lower():
         raise HTTPException(403, "Only admin can view all applications")
