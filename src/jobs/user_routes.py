@@ -37,7 +37,7 @@ async def get_job(job_id: uuid.UUID):
 
 @router.post("/jobs/apply/{job_id}", status_code=status.HTTP_200_OK)
 async def apply_job(job_id: uuid.UUID, resume_url: str, cover_letter: Optional[str] = None, payload:dict=Depends(get_current_user)):
-    user_id = payload["user"]["id"]
+    user_id = uuid.UUID(str(payload["user"]["id"]))
 
     async with AsyncSession(engine) as session:
         res = await session.execute(select(Job).where(Job.id == job_id, Job.is_active == True))
@@ -56,11 +56,11 @@ async def apply_job(job_id: uuid.UUID, resume_url: str, cover_letter: Optional[s
         await session.commit()
         await session.refresh(application)
 
-    return {"message": "Application submitted successfully", "application_id": application.id, "status": application.status.value, "applied_at": application.created_at, "job_title": job.title, "job_description": job.description, "user_id": user_id, "resume_url": resume_url, "cover_letter": cover_letter}
+    return {"message": "Application submitted successfully", "application_id": application.id, "status": application.status.value}
 
 @router.get("/me/applications", status_code=status.HTTP_200_OK)
 async def list_my_applications(payload:dict=Depends(get_current_user)):
-    user_id = payload["user"]["id"]
+    user_id = uuid.UUID(str(payload["user"]["id"]))
 
     async with AsyncSession(engine) as session:
         res = await session.execute(select(Application).where(Application.user_id == user_id))
@@ -70,7 +70,7 @@ async def list_my_applications(payload:dict=Depends(get_current_user)):
 
 @router.get("/me/applications/{application_id}", status_code=status.HTTP_200_OK)
 async def get_my_application(application_id: uuid.UUID, payload:dict=Depends(get_current_user)):
-    user_id = payload["user"]["id"]
+    user_id = uuid.UUID(str(payload["user"]["id"]))
 
     async with AsyncSession(engine) as session:
         res = await session.execute(select(Application).where(Application.id == application_id, Application.user_id == user_id))

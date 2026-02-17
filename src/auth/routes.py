@@ -30,7 +30,7 @@ async def login(email: str, password: str):
         if not verify_password(password, user.hashed_password):
             raise HTTPException(401, "Wrong password")
     except Exception as e:
-        raise HTTPException(500, f"Password verify crash: {str(e)}")
+        raise HTTPException(500, f"Password verification failed: {str(e)}")
 
     try:
         token = create_access_token({
