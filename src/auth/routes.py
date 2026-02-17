@@ -17,25 +17,31 @@ PASSWORD_REGEX = re.compile(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@#$%^&+=]{8,}$')
 @router.post("/login")
 async def login(email: str, password: str):
 
-	if not EMAIL_REGEX.match(email):
-		raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email format")
-	if not PASSWORD_REGEX.match(password):
-		raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password does not meet complexity requirements")
+    async with AsyncSession(engine) as session:
+        res = await session.execute(
+            select(User).where(User.email == email)
+        )
+        user = res.scalars().first()
 
-	async with AsyncSession(engine) as session:
-		q = select(User).where(User.email == email)
-		res = await session.execute(q)
-		user = res.scalars().first()
+    if not user:
+        raise HTTPException(401, "Email not found")
 
-	if not user:
-		raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    try:
+        if not verify_password(password, user.hashed_password):
+            raise HTTPException(401, "Wrong password")
+    except Exception as e:
+        raise HTTPException(500, f"Password verify crash: {str(e)}")
 
-	if not verify_password(password, user.hashed_password):
-		raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    try:
+        token = create_access_token({
+            "id": str(user.id),
+            "email": user.email,
+            "role": user.role
+        })
+    except Exception as e:
+        raise HTTPException(500, f"Token crash: {str(e)}")
 
-	token = create_access_token({"id": str(user.id), "email": user.email, "role": user.role})
-	return {"message": "Login successful", "access_token": token, "token_type": "bearer"}
-
+    return {"access_token": token}
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(name: str, email: str, password: str):
