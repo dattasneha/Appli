@@ -6,7 +6,7 @@ from sqlmodel import select
 
 from src.auth.util import create_access_token, verify_password, hash_password
 from src.db.main import engine
-from src.model import User
+from src.model import User,UserRole
 
 router = APIRouter()
 
@@ -44,7 +44,7 @@ async def login(email: str, password: str):
     return {"access_token": token}
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register(name: str, email: str, password: str):
+async def register(name: str, email: str, password: str,role:UserRole):
 	if not name or not name.strip():
 		raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Name is required")
 	if not EMAIL_REGEX.match(email):
@@ -59,13 +59,13 @@ async def register(name: str, email: str, password: str):
 		if existing:
 			raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
 
-		new_user = User(name=name.strip(), email=email, hashed_password=hash_password(password))
+		new_user = User(name=name.strip(), email=email, hashed_password=hash_password(password),role=role)
 		session.add(new_user)
 		await session.commit()
 		await session.refresh(new_user)
 			
 
-	return {"message": "User registered", "id": str(new_user.id), "email": new_user.email}
+	return {"message": f"User registered with role {new_user.role}", "id": str(new_user.id), "email": new_user.email}
 
 
 	
