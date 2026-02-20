@@ -4,6 +4,7 @@ from src.db.main import init_db
 from src.auth.routes import router as auth_router
 from src.jobs.admin_routes import router as admin_router
 from src.jobs.user_routes import router as user_router
+from fastapi.middleware.cors import CORSMiddleware
 @asynccontextmanager
 async def life_span(app: FastAPI):
     print(f"Server is starting...")
@@ -19,6 +20,16 @@ app = FastAPI(
     lifespan=life_span
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "https://appli-frontend.onrender.com"
+    ],
+    allow_methods=["*"],
+    allow_headers=["*"],
+    allow_credentials=True
+    )
 app.include_router(auth_router,prefix=f"/appli/{version}")
 app.include_router(admin_router,prefix=f"/appli/{version}")
 app.include_router(user_router,prefix=f"/appli/{version}")

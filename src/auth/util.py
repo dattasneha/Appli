@@ -9,7 +9,7 @@ import jwt
 
 from src.config import Config
 
-ACCESS_TOKEN_EXPIRY = 9000
+ACCESS_TOKEN_EXPIRY = 10000
 _PBKDF2_ITERATIONS = 100_000
 
 
