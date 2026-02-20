@@ -56,7 +56,7 @@ async def login(payload: LoginRequest,response: Response):
             "email": user.email,
             "role": user.role.value
         })
-        response.set_cookie(key="access_token", value=token, httponly=True, samesite="lax",max_age=ACCESS_TOKEN_EXPIRY)
+        response.set_cookie(key="access_token", value=token, httponly=True, samesite="lax",max_age=ACCESS_TOKEN_EXPIRY,path="/")
     except Exception as e:
         raise HTTPException(500, f"Token crash: {str(e)}")
     sanitized_user = {
